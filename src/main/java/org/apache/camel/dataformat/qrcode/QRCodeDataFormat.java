@@ -37,16 +37,24 @@ public class QRCodeDataFormat implements DataFormat {
 
     private static final Logger LOG = LoggerFactory.getLogger(QRCodeDataFormat.class);
 
-    BarcodeFormat format = BarcodeFormat.QR_CODE;
-    ImageType type = ImageType.PNG;
-    int width = 100;
-    int height = 100;
-    String charset = "UTF-8";
+    private BarcodeFormat format = BarcodeFormat.QR_CODE;
+    private ImageType type = ImageType.PNG;
+    private int width = 100;
+    private int height = 100;
+    private String charset = "UTF-8";
 
+    /**
+     * Marshall a {@link String} payload to a code image.
+     * 
+     * @param exchange
+     * @param graph
+     * @param stream
+     * @throws Exception 
+     */
     @Override
     public void marshal(Exchange exchange, Object graph, OutputStream stream) throws Exception {
         String payload = ExchangeHelper.convertToMandatoryType(exchange, String.class, graph);
-        LOG.debug("Payload --> " + payload);
+        LOG.debug(String.format("Marshalling body '%s' to %s - code.", payload, format.toString()));
 
         Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new EnumMap<EncodeHintType, ErrorCorrectionLevel>(EncodeHintType.class);
         hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
@@ -57,8 +65,17 @@ public class QRCodeDataFormat implements DataFormat {
         MatrixToImageWriter.writeToStream(matrix, type.toString(), stream);
     }
 
+    /**
+     * Unmarshall a code image to a {@link String} payload.
+     * 
+     * @param exchange
+     * @param stream
+     * @return
+     * @throws Exception 
+     */
     @Override
     public Object unmarshal(Exchange exchange, InputStream stream) throws Exception {
+        LOG.debug("Unmarshalling code image to string.");
         Map<DecodeHintType, ErrorCorrectionLevel> hintMap = new EnumMap<DecodeHintType, ErrorCorrectionLevel>(DecodeHintType.class);
 
         BufferedInputStream in = exchange.getContext().getTypeConverter().mandatoryConvertTo(BufferedInputStream.class, stream);
@@ -83,14 +100,6 @@ public class QRCodeDataFormat implements DataFormat {
         this.height = height;
     }
 
-    public BarcodeFormat getFormat() {
-        return format;
-    }
-
-    public void setFormat(BarcodeFormat format) {
-        this.format = format;
-    }
-
     public ImageType getType() {
         return type;
     }
@@ -106,7 +115,5 @@ public class QRCodeDataFormat implements DataFormat {
     public void setCharset(String charset) {
         this.charset = charset;
     }
-    
-    
 
 }

@@ -94,7 +94,7 @@
         <configuration>
           <instructions>
             <Bundle-SymbolicName>org.apache.camel.camel-qrcode</Bundle-SymbolicName>
-            <Export-Service>org.apache.camel.spi.ComponentResolver;component=foo</Export-Service>
+            <Export-Service>org.apache.camel.spi.ComponentResolver;component=qrcode</Export-Service>
           </instructions>
         </configuration>
       </plugin>
