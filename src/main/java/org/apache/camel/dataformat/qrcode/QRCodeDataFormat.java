@@ -54,41 +54,40 @@ public class QRCodeDataFormat implements DataFormat {
     private final BarcodeFormat format = BarcodeFormat.QR_CODE;
     
     /**
-     * The Image Type. Default is PNG.
+     * The default parameters.
      */
-    private ImageType type = ImageType.PNG;
+    private Parameters params;
     
     /**
-     * The width of the image. Default is 100px.
+     * If true, the header parameters of a message will be used to configure
+     * the component.
      */
-    private int width = 100;
-    
-    /**
-     * The height of the image. Default is 100px.
-     */
-    private int height = 100;
-    
-    /**
-     * The message encoding. Default is UTF-8.
-     */
-    private String charset = "UTF-8";
+    private boolean parameterized = true;
 
-    public QRCodeDataFormat() {
+    public QRCodeDataFormat(boolean parameterized) {
+        this.parameterized = parameterized;
+        this.setDefaultParameters();
     }
 
-    public QRCodeDataFormat(int height, int width) {
-        this.height = height;
-        this.width = width;
+    public QRCodeDataFormat(int height, int width, boolean parameterized) {
+        this.parameterized = parameterized;
+        this.setDefaultParameters();
+        this.params.setHeight(height);
+        this.params.setWidth(width);
     }
 
-    public QRCodeDataFormat(int height, int width, ImageType type) {
-        this.height = height;
-        this.width = width;
-        this.type = type;
+    public QRCodeDataFormat(int height, int width, ImageType type, boolean parameterized) {
+        this.parameterized = parameterized;
+        this.setDefaultParameters();
+        this.params.setHeight(height);
+        this.params.setWidth(width);
+        this.params.setType(type);
     }
 
-    public QRCodeDataFormat(ImageType type) {
-        this.type = type;
+    public QRCodeDataFormat(ImageType type, boolean parameterized) {
+        this.parameterized = parameterized;
+        this.setDefaultParameters();
+        this.params.setType(type);
     }
 
     /**
@@ -104,23 +103,33 @@ public class QRCodeDataFormat implements DataFormat {
         String payload = ExchangeHelper.convertToMandatoryType(exchange, String.class, graph);
         LOG.debug(String.format("Marshalling body '%s' to %s - code.", payload, format.toString()));
         
+        Parameters p = this.params;
+        // if message headers should be used, create a new parameters object
+        if(this.parameterized) {
+            p = new Parameters(exchange.getIn().getHeaders(), params);
+        } 
 
-
+        // set values
+        String type = p.getType().toString();
+        String charset = p.getCharset(); 
+        
         // create qr-code image
         Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new EnumMap<EncodeHintType, ErrorCorrectionLevel>(EncodeHintType.class);
-        hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
-        
-                
+        hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);    
 
         // set file name        
-        String filename = String.format("%s.%s", exchange.getExchangeId(), this.type.toString().toLowerCase());
+        String filename = String.format("%s.%s", exchange.getExchangeId(), type.toLowerCase());
         exchange.getOut().setHeader(Exchange.FILE_NAME, filename);
         
-        BitMatrix matrix = new MultiFormatWriter().encode(
+        BitMatrix matrix;
+        matrix = new MultiFormatWriter().encode(
                 new String(payload.getBytes(charset), charset),
-                format, width, height, hintMap);
+                format, 
+                p.getWidth(), 
+                p.getHeight(), 
+                hintMap);
         
-        MatrixToImageWriter.writeToStream(matrix, type.toString(), stream);
+        MatrixToImageWriter.writeToStream(matrix, type, stream);
     }
 
     /**
@@ -145,37 +154,25 @@ public class QRCodeDataFormat implements DataFormat {
         Result result = new MultiFormatReader().decode(bitmap, hintMap);
         return result.getText();
     }
-
-    public int getWidth() {
-        return width;
+    
+    /**
+     * Sets the default parameters:
+     * <ul>
+     *  <li>image type: PNG</li>
+     *  <li>image width: 100px</li>
+     *  <li>image heigth: 100px</li>
+     *  <li>encoding: UTF-8</li>
+     * </ul>
+     */
+    private void setDefaultParameters() {
+        this.params = new Parameters(ImageType.PNG, 100, 100, "UTF-8");
     }
 
-    public void setWidth(int width) {
-        this.width = width;
+    public Parameters getParams() {
+        return params;
     }
 
-    public int getHeight() {
-        return height;
+    public boolean isParameterized() {
+        return parameterized;
     }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public ImageType getType() {
-        return type;
-    }
-
-    public void setType(ImageType type) {
-        this.type = type;
-    }
-
-    public String getCharset() {
-        return charset;
-    }
-
-    public void setCharset(String charset) {
-        this.charset = charset;
-    }
-
 }

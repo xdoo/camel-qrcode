@@ -26,28 +26,31 @@ public class Parameters {
     /**
      * The Image Type. Default is PNG.
      */
-    private ImageType type = ImageType.PNG;
+    private ImageType type;
     
     /**
      * The width of the image. Default is 100px.
      */
-    private Integer width = 100;
+    private Integer width;
     
     /**
      * The height of the image. Default is 100px.
      */
-    private Integer height = 100;
+    private Integer height;
     
     /**
      * The message encoding. Default is UTF-8.
      */
-    private String charset = "UTF-8";
+    private String charset;
 
     /**
      * Default construtor creates default values.
      */
-    public Parameters() {
-        
+    public Parameters(ImageType type, Integer width, Integer height, String charset) {
+        this.charset = charset;
+        this.height = height;
+        this.width = width;
+        this.type = type;
     }
     
     /**
@@ -55,26 +58,34 @@ public class Parameters {
      * 
      * @param headers the camel message headers 
      */
-    public Parameters(Map<Object,Object> headers) {
-        this.setParameters(headers);
+    public Parameters(Map<String,Object> headers, Parameters params) {
+        this.setParameters(headers, params);
     }
     
-    private void setParameters(Map<Object,Object> headers) {
+    private void setParameters(Map<String,Object> headers, Parameters params) {
         
         if(headers.containsKey(QRCode.HEIGHT)) {
             this.setHeight((Integer) headers.get(QRCode.HEIGHT));
+        } else {
+            this.setHeight(params.getHeight());
         }
         
         if(headers.containsKey(QRCode.WIDTH)) {
             this.setWidth((Integer) headers.get(QRCode.WIDTH));
+        } else {
+            this.setWidth(params.getWidth());
         }
         
         if(headers.containsKey(QRCode.TYPE)) {
             this.setType((ImageType) headers.get(QRCode.TYPE));
+        } else {
+            this.setType(params.getType());
         }
         
         if(headers.containsKey(QRCode.ENCODING)){
             this.setCharset((String) headers.get(QRCode.ENCODING));
+        } else {
+            this.setCharset(params.getCharset());
         }
         
     }

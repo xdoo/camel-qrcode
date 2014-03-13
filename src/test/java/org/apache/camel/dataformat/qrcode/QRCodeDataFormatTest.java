@@ -81,21 +81,21 @@ public class QRCodeDataFormatTest extends CamelTestSupport {
             public void configure() {
                 
                 // QR-Code default
-                DataFormat qrcode1 = new QRCodeDataFormat();
+                DataFormat qrcode1 = new QRCodeDataFormat(false);
                 
                 from("direct:qrcode1")
                         .marshal(qrcode1)
                         .to("file:target/out");
                 
                 // QR-Code with modified size
-                DataFormat  qrcode2 = new QRCodeDataFormat(200, 200);
+                DataFormat  qrcode2 = new QRCodeDataFormat(200, 200, false);
                 
                 from("direct:qrcode2")
                         .marshal(qrcode2)
                         .to("file:target/out");
                 
                 // QR-Code with modified type
-                DataFormat qrcode3 = new QRCodeDataFormat(ImageType.JPG);
+                DataFormat qrcode3 = new QRCodeDataFormat(ImageType.JPG, false);
                 
                 from("direct:qrcode3")
                         .marshal(qrcode3)
