@@ -36,7 +36,10 @@ import org.slf4j.LoggerFactory;
 public class QRCodeDataFormat implements DataFormat {
 
     private static final Logger LOG = LoggerFactory.getLogger(QRCodeDataFormat.class);
-
+    
+    /**
+     * The barcode 
+     */
     private BarcodeFormat format = BarcodeFormat.QR_CODE;
     private ImageType type = ImageType.PNG;
     private int width = 100;
