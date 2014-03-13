@@ -1,7 +1,18 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.camel.dataformat.qrcode;
 
@@ -36,15 +47,49 @@ import org.slf4j.LoggerFactory;
 public class QRCodeDataFormat implements DataFormat {
 
     private static final Logger LOG = LoggerFactory.getLogger(QRCodeDataFormat.class);
+
+    /**
+     * The barcode format. Default is QR-Code.
+     */
+    private final BarcodeFormat format = BarcodeFormat.QR_CODE;
     
     /**
-     * The barcode 
+     * The Image Type. Default is PNG.
      */
-    private BarcodeFormat format = BarcodeFormat.QR_CODE;
     private ImageType type = ImageType.PNG;
+    
+    /**
+     * The width of the image. Default is 100px.
+     */
     private int width = 100;
+    
+    /**
+     * The height of the image. Default is 100px.
+     */
     private int height = 100;
+    
+    /**
+     * The message encoding. Default is UTF-8.
+     */
     private String charset = "UTF-8";
+
+    public QRCodeDataFormat() {
+    }
+
+    public QRCodeDataFormat(int height, int width) {
+        this.height = height;
+        this.width = width;
+    }
+
+    public QRCodeDataFormat(int height, int width, ImageType type) {
+        this.height = height;
+        this.width = width;
+        this.type = type;
+    }
+
+    public QRCodeDataFormat(ImageType type) {
+        this.type = type;
+    }
 
     /**
      * Marshall a {@link String} payload to a code image.
@@ -58,13 +103,23 @@ public class QRCodeDataFormat implements DataFormat {
     public void marshal(Exchange exchange, Object graph, OutputStream stream) throws Exception {
         String payload = ExchangeHelper.convertToMandatoryType(exchange, String.class, graph);
         LOG.debug(String.format("Marshalling body '%s' to %s - code.", payload, format.toString()));
+        
 
+
+        // create qr-code image
         Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new EnumMap<EncodeHintType, ErrorCorrectionLevel>(EncodeHintType.class);
         hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+        
+                
 
+        // set file name        
+        String filename = String.format("%s.%s", exchange.getExchangeId(), this.type.toString().toLowerCase());
+        exchange.getOut().setHeader(Exchange.FILE_NAME, filename);
+        
         BitMatrix matrix = new MultiFormatWriter().encode(
                 new String(payload.getBytes(charset), charset),
                 format, width, height, hintMap);
+        
         MatrixToImageWriter.writeToStream(matrix, type.toString(), stream);
     }
 
@@ -81,8 +136,12 @@ public class QRCodeDataFormat implements DataFormat {
         LOG.debug("Unmarshalling code image to string.");
         Map<DecodeHintType, ErrorCorrectionLevel> hintMap = new EnumMap<DecodeHintType, ErrorCorrectionLevel>(DecodeHintType.class);
 
-        BufferedInputStream in = exchange.getContext().getTypeConverter().mandatoryConvertTo(BufferedInputStream.class, stream);
-        BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(new BufferedImageLuminanceSource(ImageIO.read(in))));
+        BufferedInputStream in = exchange.getContext()
+                .getTypeConverter()
+                .mandatoryConvertTo(BufferedInputStream.class, stream);
+        BinaryBitmap bitmap = new BinaryBitmap(
+                new HybridBinarizer(
+                        new BufferedImageLuminanceSource(ImageIO.read(in))));
         Result result = new MultiFormatReader().decode(bitmap, hintMap);
         return result.getText();
     }
