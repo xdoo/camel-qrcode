@@ -104,16 +104,22 @@ public class QRCodeDataFormat implements DataFormat {
         String payload = ExchangeHelper.convertToMandatoryType(exchange, String.class, graph);
         LOG.debug(String.format("Marshalling body '%s' to %s - code.", payload, format.toString()));
         
-        // set file name
-        String filename = exchange.getExchangeId() + "." + this.type.toString().toLowerCase();
-        exchange.getOut().setHeader(Exchange.FILE_NAME, filename);
+
 
         // create qr-code image
         Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new EnumMap<EncodeHintType, ErrorCorrectionLevel>(EncodeHintType.class);
         hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+        
+                
+
+        // set file name        
+        String filename = String.format("%s.%s", exchange.getExchangeId(), this.type.toString().toLowerCase());
+        exchange.getOut().setHeader(Exchange.FILE_NAME, filename);
+        
         BitMatrix matrix = new MultiFormatWriter().encode(
                 new String(payload.getBytes(charset), charset),
                 format, width, height, hintMap);
+        
         MatrixToImageWriter.writeToStream(matrix, type.toString(), stream);
     }
 
