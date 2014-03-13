@@ -73,6 +73,24 @@ public class QRCodeDataFormat implements DataFormat {
      */
     private String charset = "UTF-8";
 
+    public QRCodeDataFormat() {
+    }
+
+    public QRCodeDataFormat(int height, int width) {
+        this.height = height;
+        this.width = width;
+    }
+
+    public QRCodeDataFormat(int height, int width, ImageType type) {
+        this.height = height;
+        this.width = width;
+        this.type = type;
+    }
+
+    public QRCodeDataFormat(ImageType type) {
+        this.type = type;
+    }
+
     /**
      * Marshall a {@link String} payload to a code image.
      * 
@@ -85,10 +103,14 @@ public class QRCodeDataFormat implements DataFormat {
     public void marshal(Exchange exchange, Object graph, OutputStream stream) throws Exception {
         String payload = ExchangeHelper.convertToMandatoryType(exchange, String.class, graph);
         LOG.debug(String.format("Marshalling body '%s' to %s - code.", payload, format.toString()));
+        
+        // set file name
+        String filename = exchange.getExchangeId() + "." + this.type.toString().toLowerCase();
+        exchange.getOut().setHeader(Exchange.FILE_NAME, filename);
 
+        // create qr-code image
         Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new EnumMap<EncodeHintType, ErrorCorrectionLevel>(EncodeHintType.class);
         hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
-
         BitMatrix matrix = new MultiFormatWriter().encode(
                 new String(payload.getBytes(charset), charset),
                 format, width, height, hintMap);
