@@ -103,23 +103,32 @@ public class QRCodeDataFormat implements DataFormat {
         String payload = ExchangeHelper.convertToMandatoryType(exchange, String.class, graph);
         LOG.debug(String.format("Marshalling body '%s' to %s - code.", payload, format.toString()));
         
+        // set default values
         Parameters p = this.params;
+        String name = exchange.getExchangeId();
+        
         // if message headers should be used, create a new parameters object
         if(this.parameterized) {
-            p = new Parameters(exchange.getIn().getHeaders(), params);
+            Map<String, Object> headers = exchange.getIn().getHeaders();
+            p = new Parameters(headers, params);
+            
+            // if a qrcode filename is set, take it
+            if(headers.containsKey(QRCode.NAME)) {
+                name = (String) headers.get(QRCode.NAME);
+            }
         } 
 
         // set values
         String type = p.getType().toString();
         String charset = p.getCharset(); 
         
+        // set file name (<exchangeid>.<imagetype>)       
+        String filename = String.format("%s.%s", name, type.toLowerCase());
+        exchange.getOut().setHeader(Exchange.FILE_NAME, filename);
+        
         // create qr-code image
         Map<EncodeHintType, ErrorCorrectionLevel> hintMap = new EnumMap<EncodeHintType, ErrorCorrectionLevel>(EncodeHintType.class);
         hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);    
-
-        // set file name        
-        String filename = String.format("%s.%s", exchange.getExchangeId(), type.toLowerCase());
-        exchange.getOut().setHeader(Exchange.FILE_NAME, filename);
         
         BitMatrix matrix;
         matrix = new MultiFormatWriter().encode(
