@@ -41,7 +41,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Apache Camel {@link DataFormat} component to generate a qr-code image from a text message
+ * and vice versa.
+ * 
  * @author claus.straube
  */
 public class QRCodeDataFormat implements DataFormat {
